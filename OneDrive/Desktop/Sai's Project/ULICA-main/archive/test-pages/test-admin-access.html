@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Access Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .info { background-color: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>Admin Access Test</h1>
+    
+    <div id="results"></div>
+    
+    <button onclick="testLogin()">Test Admin Login</button>
+    <button onclick="testAuthMe()">Test /api/auth/me</button>
+    <button onclick="testAdminDashboard()">Test /api/admin/dashboard</button>
+    <button onclick="clearResults()">Clear Results</button>
+
+    <script>
+        function addResult(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = message;
+            results.appendChild(div);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function testLogin() {
+            addResult('Testing admin login...', 'info');
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'admin@ulica.com',
+                        password: 'admin123'
+                    }),
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(`✅ Login successful!<br>
+                        User: ${data.data.user.email}<br>
+                        Role: ${data.data.user.role}<br>
+                        Token: ${data.data.accessToken.substring(0, 50)}...`, 'success');
+                } else {
+                    addResult(`❌ Login failed: ${data.message || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Login error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAuthMe() {
+            addResult('Testing /api/auth/me...', 'info');
+            
+            try {
+                const response = await fetch('/api/auth/me', {
+                    method: 'GET',
+                    credentials: 'include',
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(`✅ Auth check successful!<br>
+                        User: ${data.data.email}<br>
+                        Role: ${data.data.role}<br>
+                        Is Admin: ${data.data.role === 'admin'}`, 'success');
+                } else {
+                    addResult(`❌ Auth check failed: ${data.error || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Auth check error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAdminDashboard() {
+            addResult('Testing /api/admin/dashboard...', 'info');
+            
+            try {
+                const response = await fetch('/api/admin/dashboard', {
+                    method: 'GET',
+                    credentials: 'include',
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(`✅ Admin dashboard access successful!<br>
+                        Orders: ${data.data.stats.orders.total}<br>
+                        Products: ${data.data.stats.products.total}<br>
+                        Customers: ${data.data.stats.customers.total}`, 'success');
+                } else {
+                    addResult(`❌ Admin dashboard access failed: ${data.error || 'Unknown error'}<br>
+                        Status: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Admin dashboard error: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

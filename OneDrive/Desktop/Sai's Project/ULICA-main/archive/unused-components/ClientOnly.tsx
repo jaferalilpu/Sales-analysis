@@ -1,0 +1,27 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+
+interface ClientOnlyProps {
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+}
+
+export function ClientOnly({ children, fallback = null }: ClientOnlyProps) {
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    // Use a very short timeout to ensure hydration completes quickly
+    const timer = setTimeout(() => {
+      setHasMounted(true);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!hasMounted) {
+    return <>{fallback}</>;
+  }
+
+  return <>{children}</>;
+}
